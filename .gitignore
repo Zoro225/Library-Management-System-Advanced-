@@ -47,10 +47,7 @@ next-env.d.ts
 
 /app/generated/prisma
 
-# local tooling (auto-generated, not part of the app)
-AGENTS.md
-CLAUDE.md
-.agents/
-.claude/
+# editor files
+.vscode/
+.idea/
 .windsurf/
-skills-lock.json
