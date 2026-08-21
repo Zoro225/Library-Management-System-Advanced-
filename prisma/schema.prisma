@@ -1,0 +1,96 @@
+// Prisma schema for the Library Management System
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+  STUDENT
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  borrowRequests   BorrowRequest[] @relation("StudentRequests")
+  approvedRequests BorrowRequest[] @relation("ApprovedByStaff")
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  books Book[]
+}
+
+model Tag {
+  id    String     @id @default(cuid())
+  name  String     @unique
+  books BookTag[]
+}
+
+model BookTag {
+  bookId String
+  tagId  String
+  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, tagId])
+}
+
+model Book {
+  id               String   @id @default(cuid())
+  title            String
+  author           String
+  isbn             String?
+  description      String?
+  coverColor       String   @default("#6366f1")
+  totalCopies      Int      @default(1)
+  availableCopies  Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  tags           BookTag[]
+  borrowRequests BorrowRequest[]
+}
+
+model BorrowRequest {
+  id          String        @id @default(cuid())
+  bookId      String
+  studentId   String
+  status      RequestStatus @default(PENDING)
+  requestedAt DateTime      @default(now())
+  decidedAt   DateTime?
+  dueDate     DateTime?
+  returnedAt  DateTime?
+  approvedById String?
+
+  renewalRequested Boolean @default(false)
+  renewalCount     Int     @default(0)
+
+  book       Book  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  student    User  @relation("StudentRequests", fields: [studentId], references: [id], onDelete: Cascade)
+  approvedBy User? @relation("ApprovedByStaff", fields: [approvedById], references: [id])
+}
